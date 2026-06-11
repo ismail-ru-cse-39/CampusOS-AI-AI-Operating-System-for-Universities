@@ -1,0 +1,1 @@
+"""CampusOS AI backend application."""

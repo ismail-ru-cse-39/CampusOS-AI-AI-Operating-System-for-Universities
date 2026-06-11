@@ -1,0 +1,45 @@
+# Render Blueprint — CampusOS AI
+# Docs: https://render.com/docs/blueprint-spec
+
+databases:
+  - name: campusos-db
+    plan: free
+    databaseName: campusos
+    user: campusos
+
+services:
+  - type: web
+    name: campusos-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: campusos-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        sync: false
+      - key: ENVIRONMENT
+        value: production
+      - key: OPENAI_API_KEY
+        sync: false
+
+  - type: web
+    name: campusos-web
+    runtime: docker
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: ./frontend
+    plan: free
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        fromService:
+          name: campusos-api
+          type: web
+          property: hostport
