@@ -21,6 +21,7 @@ Detailed reference for all 12 specialized agents in the CampusOS multi-agent sys
 | Faculty Intelligence | `agents/faculty_intelligence/` | Stub | Faculty |
 | Retention | `agents/retention/` | Stub | Faculty, Admin, Executive |
 | Research Assistant | `agents/research_assistant/` | Stub | Faculty, Research Students |
+| Executive Intelligence | `agents/executive_intelligence/` | Stub | Executive, Leadership |
 
 ---
 
@@ -344,6 +345,22 @@ Faculty, admin, executive. Not accessible to students.
 ### Permissions
 
 Faculty, research students, postgraduates.
+
+---
+
+## 12. Executive Intelligence Agent
+
+**Institutional metrics and leadership insights.**
+
+### Responsibilities
+
+- Enrollment and retention KPI summaries
+- Executive dashboard narratives
+- Weekly leadership report previews
+
+### Permissions
+
+Executive and admin roles.
 
 ---
 

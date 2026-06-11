@@ -24,6 +24,7 @@ class AgentRegistry:
         from app.agents.admissions.agent import AdmissionsAgent
         from app.agents.campus_navigation.agent import CampusNavigationAgent
         from app.agents.career.agent import CareerAgent
+        from app.agents.executive_intelligence.agent import ExecutiveIntelligenceAgent
         from app.agents.faculty_intelligence.agent import FacultyIntelligenceAgent
         from app.agents.knowledge.agent import KnowledgeAgent
         from app.agents.research_assistant.agent import ResearchAssistantAgent
@@ -43,6 +44,7 @@ class AgentRegistry:
             FacultyIntelligenceAgent,
             RetentionAgent,
             ResearchAssistantAgent,
+            ExecutiveIntelligenceAgent,
         ]:
             self.register(agent_cls())
 

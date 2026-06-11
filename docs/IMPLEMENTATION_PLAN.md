@@ -38,7 +38,7 @@ Step-by-step build guide from scaffold to full platform. Each phase lists object
 
 ### Acceptance Criteria
 
-- [x] Health endpoint returns 11 registered agents
+- [x] Health endpoint returns 12 registered agents
 - [x] Chat routes to `student_success` for credit questions
 - [x] Chat routes to `knowledge` for policy questions
 - [x] Frontend displays agent name and citations
@@ -51,7 +51,7 @@ None.
 
 ## Phase 1: Auth, RBAC, and Audit Logging
 
-**Status:** Pending (see T-011 through T-016)
+**Status:** In progress — auth/audit/Alembic stubs landed (T-012, T-014, T-015 partial); SSO and frontend session pending
 
 ### Objectives
 
