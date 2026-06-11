@@ -1,4 +1,5 @@
 from app.agents.base import Agent, AgentContext, AgentResult
+from app.services.llm import llm_service
 from app.services.rag import rag_service
 
 
@@ -15,7 +16,7 @@ class KnowledgeAgent(Agent):
         return self._keyword_score(message)
 
     async def run(self, context: AgentContext) -> AgentResult:
-        results = rag_service.search(context.message, top_k=3)
+        results = await rag_service.search_hybrid(context.message, top_k=3)
         if not results:
             return AgentResult(
                 agent=self.name,
@@ -26,15 +27,19 @@ class KnowledgeAgent(Agent):
                 metadata={"status": "no_results"},
             )
 
-        top = results[0]
         citations = [r.to_citation() for r in results]
-        answer = (
-            f"Based on official university documents:\n\n{top.excerpt}\n\n"
-            f"Source: {top.document_title}"
-        )
+        chunks = [
+            {
+                "document_title": r.document_title,
+                "excerpt": r.excerpt,
+                "source_url": r.source_url,
+            }
+            for r in results
+        ]
+        answer = await llm_service.synthesize_answer(context.message, chunks)
         return AgentResult(
             agent=self.name,
             message=answer,
             citations=citations,
-            metadata={"documents_matched": len(results)},
+            metadata={"documents_matched": len(results), "search_mode": "hybrid"},
         )

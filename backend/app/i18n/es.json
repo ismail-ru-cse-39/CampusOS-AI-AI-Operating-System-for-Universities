@@ -1,0 +1,8 @@
+{
+  "agent.response_prefix": "[ES] Respuesta de CampusOS AI",
+  "chat.welcome": "[ES] Bienvenido a CampusOS AI",
+  "chat.placeholder": "[ES] Pregunte sobre cursos, políticas...",
+  "dashboard.title": "[ES] Panel ejecutivo",
+  "progress.title": "[ES] Progreso del estudiante",
+  "documents.title": "[ES] Gestión de documentos"
+}

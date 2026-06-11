@@ -1,0 +1,8 @@
+{
+  "agent.response_prefix": "[ZH] CampusOS AI 回复",
+  "chat.welcome": "[ZH] 欢迎使用 CampusOS AI",
+  "chat.placeholder": "[ZH] 询问课程、政策、时间表...",
+  "dashboard.title": "[ZH] 执行仪表板",
+  "progress.title": "[ZH] 学生进度",
+  "documents.title": "[ZH] 文档管理"
+}

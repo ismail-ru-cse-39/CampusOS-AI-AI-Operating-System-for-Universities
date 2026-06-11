@@ -25,6 +25,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             CampusOS AI
           </Link>
           <Link href="/chat">Chat</Link>
+          <Link href="/progress">Progress</Link>
+          <Link href="/documents">Documents</Link>
           <Link href="/dashboard">Dashboard</Link>
         </nav>
         <main>{children}</main>

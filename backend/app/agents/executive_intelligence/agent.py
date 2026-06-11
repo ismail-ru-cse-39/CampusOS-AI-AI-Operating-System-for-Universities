@@ -1,4 +1,5 @@
 from app.agents.base import Agent, AgentContext, AgentResult
+from app.services.analytics import analytics_service
 
 
 class ExecutiveIntelligenceAgent(Agent):
@@ -24,12 +25,20 @@ class ExecutiveIntelligenceAgent(Agent):
         return score * 0.4
 
     async def run(self, context: AgentContext) -> AgentResult:
+        metrics = analytics_service.get_executive_metrics()
+        report = analytics_service.generate_weekly_report()
+
+        msg = (
+            f"Executive summary:\n"
+            f"  Retention: {metrics['retention_rate']['value']}{metrics['retention_rate']['unit']}\n"
+            f"  Enrollment forecast: {metrics['enrollment_forecast']['value']:,} students\n"
+            f"  At-risk students: {metrics['at_risk_students']['value']}\n"
+            f"  Student satisfaction: {metrics['student_satisfaction']['value']}{metrics['student_satisfaction']['unit']}\n\n"
+            f"{report['summary']}"
+        )
+
         return AgentResult(
             agent=self.name,
-            message=(
-                "Executive Intelligence Agent (coming soon in Phase 5). "
-                "I will surface live enrollment, retention, and department performance metrics "
-                "with weekly AI-generated leadership reports."
-            ),
-            metadata={"status": "stub"},
+            message=msg,
+            metadata={"metrics": metrics, "report_preview": report["highlights"]},
         )

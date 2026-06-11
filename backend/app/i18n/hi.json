@@ -1,0 +1,8 @@
+{
+  "agent.response_prefix": "[HI] CampusOS AI प्रतिक्रिया",
+  "chat.welcome": "[HI] CampusOS AI में आपका स्वागत है",
+  "chat.placeholder": "[HI] पाठ्यक्रम, नीतियों के बारे में पूछें...",
+  "dashboard.title": "[HI] कार्यकारी डैशबोर्ड",
+  "progress.title": "[HI] छात्र प्रगति",
+  "documents.title": "[HI] दस्तावेज़ प्रबंधन"
+}

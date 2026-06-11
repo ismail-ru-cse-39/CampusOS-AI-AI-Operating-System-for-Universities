@@ -1,4 +1,5 @@
 from app.agents.base import Agent, AgentContext, AgentResult
+from app.services.degree import degree_engine
 
 
 class StudentSuccessAgent(Agent):
@@ -21,19 +22,24 @@ class StudentSuccessAgent(Agent):
         remaining = max(0, required - earned)
         program = memory.get("program", "your program")
         name = memory.get("full_name", "Student")
+        completed_codes = [
+            c.split()[0] for c in memory.get("completed_courses", []) if c
+        ]
 
         lower = context.message.lower()
         if "graduate" in lower or "graduation" in lower:
-            can_graduate = remaining <= 15
-            msg = (
-                f"Hi {name}, you have {earned}/{required} credits in {program}. "
-                f"You need {remaining} more credits to graduate. "
-                + (
-                    "You may be eligible to graduate next semester if you complete your remaining requirements."
-                    if can_graduate
-                    else "Graduation this semester is unlikely — focus on completing core requirements first."
-                )
+            assessment = degree_engine.assess_graduation(
+                program=program,
+                credits_earned=earned,
+                completed_course_codes=completed_codes,
+                academic_standing=memory.get("academic_standing", "good"),
             )
+            msg = (
+                f"Hi {name}, you have {earned}/{assessment.credits_required} credits in {program}. "
+                f"{assessment.summary}"
+            )
+            if assessment.missing_core:
+                msg += f" Missing core: {', '.join(assessment.missing_core)}."
         elif "credit" in lower or "remaining" in lower:
             msg = (
                 f"You have earned {earned} credits toward your {required}-credit degree in {program}. "

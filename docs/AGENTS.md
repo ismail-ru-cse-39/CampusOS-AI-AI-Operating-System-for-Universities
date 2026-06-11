@@ -10,18 +10,18 @@ Detailed reference for all 12 specialized agents in the CampusOS multi-agent sys
 
 | Agent | Module | Status | Primary Users |
 |---|---|---|---|
-| Knowledge | `agents/knowledge/` | MVP | All |
-| Student Success | `agents/student_success/` | MVP | Students |
-| Academic Advisor | `agents/academic_advisor/` | Stub | Students |
-| Timetable | `agents/timetable/` | Stub | Students |
-| Campus Navigation | `agents/campus_navigation/` | Stub | Students |
-| Career | `agents/career/` | Stub | Students |
-| Admissions | `agents/admissions/` | Stub | Prospects, Admissions |
-| Admin Assistant | `agents/admin_assistant/` | Stub | Students, Admin |
-| Faculty Intelligence | `agents/faculty_intelligence/` | Stub | Faculty |
-| Retention | `agents/retention/` | Stub | Faculty, Admin, Executive |
+| Knowledge | `agents/knowledge/` | Full (hybrid RAG) | All |
+| Student Success | `agents/student_success/` | Full (degree engine) | Students |
+| Academic Advisor | `agents/academic_advisor/` | Full (roadmaps) | Students |
+| Timetable | `agents/timetable/` | Full (constraints) | Students |
+| Campus Navigation | `agents/campus_navigation/` | Full (demo graph) | Students |
+| Career | `agents/career/` | Full (demo data) | Students |
+| Admissions | `agents/admissions/` | Full (demo data) | Prospects, Admissions |
+| Admin Assistant | `agents/admin_assistant/` | Full (workflows) | Students, Admin |
+| Faculty Intelligence | `agents/faculty_intelligence/` | Full (at-risk) | Faculty |
+| Retention | `agents/retention/` | Full (risk scoring) | Faculty, Admin, Executive |
 | Research Assistant | `agents/research_assistant/` | Stub | Faculty, Research Students |
-| Executive Intelligence | `agents/executive_intelligence/` | Stub | Executive, Leadership |
+| Executive Intelligence | `agents/executive_intelligence/` | Full (metrics) | Executive, Leadership |
 
 ---
 
@@ -44,9 +44,9 @@ Detailed reference for all 12 specialized agents in the CampusOS multi-agent sys
 
 ### Tools and Data Access
 
-- RAG service (`services/rag.py`) — document retrieval
-- Document catalog (read-only)
-- LLM synthesis (Phase 2)
+- RAG service (`services/rag.py`) — hybrid keyword + pgvector semantic search
+- Document catalog and upload API (`POST /api/v1/documents/upload`)
+- LLM synthesis via `services/llm.py` (stub without `OPENAI_API_KEY`)
 
 ### Permissions
 
@@ -74,8 +74,8 @@ All authenticated users. Public documents only for students; admin can access in
 
 ### Tools and Data Access
 
-- Student memory (profile, enrollments, credits)
-- Degree requirements engine (Phase 3)
+- Student memory (`services/memory.py` — DB-backed with demo fallback)
+- Degree requirements engine (`services/degree.py`)
 - Academic standing rules
 
 ### Permissions
@@ -370,12 +370,14 @@ Executive and admin roles.
 
 Located at `backend/app/agents/orchestrator.py`.
 
-1. Receives user message with role and memory context
-2. Scores all agents via `can_handle()`
-3. Routes to highest-scoring agent (fallback: Knowledge Agent)
-4. Returns structured `AgentResult` with citations
+1. Loads student memory from DB (`services/memory.py`)
+2. Filters agents by RBAC (`can_access_agent()` in `core/rbac.py`)
+3. Scores remaining agents via `can_handle()`
+4. Routes to highest-scoring agent (fallback: Knowledge Agent)
+5. Applies i18n response prefix when non-English detected
+6. Returns structured `AgentResult` with citations
 
-Phase 0 uses keyword scoring. Phase 2+ will add LLM-based intent classification.
+Uses keyword scoring. LLM-based intent classification planned when `OPENAI_API_KEY` is configured.
 
 ---
 

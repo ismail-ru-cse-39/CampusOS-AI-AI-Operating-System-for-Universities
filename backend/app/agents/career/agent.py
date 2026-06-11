@@ -1,4 +1,5 @@
 from app.agents.base import Agent, AgentContext, AgentResult
+from app.services.demo_data import CAREER_OPPORTUNITIES
 
 
 class CareerAgent(Agent):
@@ -14,12 +15,36 @@ class CareerAgent(Agent):
 
     async def run(self, context: AgentContext) -> AgentResult:
         interests = context.memory.get("career_interests", [])
+        program = context.memory.get("program", "")
+        lower = context.message.lower()
+
+        opps = CAREER_OPPORTUNITIES
+        if "internship" in lower:
+            opps = [o for o in opps if o["type"] == "internship"]
+        elif "job" in lower:
+            opps = [o for o in opps if o["type"] in ("full_time", "part_time")]
+
+        if interests:
+            opps = [
+                o for o in opps
+                if any(i.lower() in " ".join(o["skills"]).lower() for i in interests)
+            ] or CAREER_OPPORTUNITIES
+
+        lines = [f"Career opportunities matching {program}:"]
+        for o in opps[:3]:
+            lines.append(
+                f"  • {o['title']} at {o['company']} ({o['type']})\n"
+                f"    Skills: {', '.join(o['skills'])} | Min GPA: {o['gpa_min']}"
+            )
+
+        if "resume" in lower or "cv" in lower:
+            lines.append(
+                "\nResume tips: highlight relevant projects, quantify achievements, "
+                "tailor skills to each role, and include your GPA if above 3.0."
+            )
+
         return AgentResult(
             agent=self.name,
-            message=(
-                f"Career Agent (coming soon in Phase 4). "
-                f"Based on your interests ({', '.join(interests) or 'not set'}), "
-                "I will recommend internships, jobs, and career pathways."
-            ),
-            metadata={"status": "stub", "career_interests": interests},
+            message="\n".join(lines),
+            metadata={"opportunities": opps[:3], "career_interests": interests},
         )

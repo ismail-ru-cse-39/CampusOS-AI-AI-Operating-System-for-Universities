@@ -1,0 +1,10 @@
+{
+  "agent.response_prefix": "[AR] رد CampusOS AI",
+  "chat.welcome": "[AR] مرحباً بك في CampusOS AI",
+  "chat.placeholder": "[AR] اسأل عن الدورات والسياسات...",
+  "dashboard.title": "[AR] لوحة القيادة",
+  "progress.title": "[AR] تقدم الطالب",
+  "documents.title": "[AR] إدارة المستندات",
+  "voice.start": "[AR] بدء الإدخال الصوتي",
+  "voice.stop": "[AR] إيقاف الاستماع"
+}

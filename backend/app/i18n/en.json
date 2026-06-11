@@ -1,0 +1,14 @@
+{
+  "agent.response_prefix": "CampusOS AI response",
+  "chat.welcome": "Welcome to CampusOS AI. How can I help you today?",
+  "chat.placeholder": "Ask about courses, policies, schedules...",
+  "dashboard.title": "Executive Dashboard",
+  "progress.title": "Student Progress",
+  "documents.title": "Document Management",
+  "voice.start": "Start voice input",
+  "voice.stop": "Stop listening",
+  "nav.chat": "Chat",
+  "nav.dashboard": "Dashboard",
+  "nav.progress": "Progress",
+  "nav.documents": "Documents"
+}

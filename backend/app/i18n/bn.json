@@ -1,0 +1,8 @@
+{
+  "agent.response_prefix": "[BN] CampusOS AI প্রতিক্রিয়া",
+  "chat.welcome": "[BN] CampusOS AI-তে স্বাগতম",
+  "chat.placeholder": "[BN] কোর্স, নীতি সম্পর্কে জিজ্ঞাসা করুন...",
+  "dashboard.title": "[BN] নির্বাহী ড্যাশবোর্ড",
+  "progress.title": "[BN] শিক্ষার্থীর অগ্রগতি",
+  "documents.title": "[BN] নথি ব্যবস্থাপনা"
+}

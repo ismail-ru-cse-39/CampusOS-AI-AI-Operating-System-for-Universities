@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { sendChatMessage, type ChatResponse } from "@/lib/api";
+import { VoiceInputStub } from "./VoiceInputStub";
 
 interface Message {
   role: "user" | "assistant";
@@ -148,6 +149,10 @@ export default function ChatInterface() {
       {error && (
         <p style={{ color: "#ef4444", marginBottom: "0.5rem", fontSize: "0.9rem" }}>{error}</p>
       )}
+
+      <div style={{ marginBottom: "0.5rem" }}>
+        <VoiceInputStub onTranscript={(text) => setInput(text)} />
+      </div>
 
       <form onSubmit={handleSubmit} style={{ display: "flex", gap: "0.5rem" }}>
         <input
