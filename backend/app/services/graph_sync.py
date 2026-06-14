@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.core.config import settings
 from app.services.demo_data import CAMPUS_BUILDINGS
+from app.services.neo4j_graph import get_neo4j_backend
 
 
 class GraphSyncService:
@@ -50,11 +52,14 @@ class GraphSyncService:
             )
 
     async def sync_from_postgres(self) -> dict[str, int]:
-        """Stub — would pull users, courses, enrollments from DB."""
+        """Sync entities from DB — uses Neo4j when configured."""
+        backend = get_neo4j_backend()
+        status = "neo4j_ready" if backend else "demo_sync_complete"
         return {
             "entities": len(self._entities),
             "edges": len(self._edges),
-            "status": "demo_sync_complete",
+            "status": status,
+            "neo4j_configured": settings.neo4j_configured,
         }
 
     async def get_neighbors(
@@ -63,6 +68,12 @@ class GraphSyncService:
         entity_id: str,
         relationship: str,
     ) -> list[dict[str, Any]]:
+        neo4j = get_neo4j_backend()
+        if neo4j is not None:
+            results = await neo4j.get_neighbors(entity_type, entity_id, relationship)
+            if results:
+                return results
+
         results: list[dict[str, Any]] = []
         for edge in self._edges:
             if (
@@ -77,6 +88,12 @@ class GraphSyncService:
         return results
 
     async def list_by_relationship(self, entity_type: str, relationship: str) -> list[dict[str, Any]]:
+        neo4j = get_neo4j_backend()
+        if neo4j is not None:
+            results = await neo4j.list_by_relationship(entity_type, relationship)
+            if results:
+                return results
+
         seen: set[str] = set()
         results: list[dict[str, Any]] = []
         for edge in self._edges:

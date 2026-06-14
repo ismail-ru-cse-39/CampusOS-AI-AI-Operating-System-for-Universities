@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import ClientLayout from "@/components/ClientLayout";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -11,25 +11,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
-        <nav
-          style={{
-            borderBottom: "1px solid var(--border)",
-            padding: "1rem 2rem",
-            display: "flex",
-            alignItems: "center",
-            gap: "2rem",
-            background: "var(--surface)",
-          }}
-        >
-          <Link href="/" style={{ fontWeight: 700, fontSize: "1.1rem", color: "var(--text)" }}>
-            CampusOS AI
-          </Link>
-          <Link href="/chat">Chat</Link>
-          <Link href="/progress">Progress</Link>
-          <Link href="/documents">Documents</Link>
-          <Link href="/dashboard">Dashboard</Link>
-        </nav>
-        <main>{children}</main>
+        <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
   );

@@ -1,17 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getDevToken, listDocuments } from "@/lib/api";
+import Link from "next/link";
+import { listDocuments } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 
 export default function DocumentsPage() {
+  const { token, loading: authLoading, loginDev } = useAuth();
   const [docs, setDocs] = useState<Array<Record<string, unknown>>>([]);
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
-  const loadDocs = async () => {
+  const loadDocs = async (authToken: string) => {
     try {
-      const token = await getDevToken("admin@campusos.edu", "admin");
-      const data = await listDocuments(token);
+      const data = await listDocuments(authToken);
       setDocs(data);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load documents");
@@ -19,15 +21,21 @@ export default function DocumentsPage() {
   };
 
   useEffect(() => {
-    loadDocs();
-  }, []);
+    if (authLoading) return;
+    (async () => {
+      if (!token) {
+        await loginDev("admin@campusos.edu", "admin");
+        return;
+      }
+      await loadDocs(token);
+    })();
+  }, [token, authLoading, loginDev]);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !token) return;
     setUploading(true);
     try {
-      const token = await getDevToken("admin@campusos.edu", "admin");
       const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
       const form = new FormData();
       form.append("file", file);
@@ -38,7 +46,7 @@ export default function DocumentsPage() {
         body: form,
       });
       if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
-      await loadDocs();
+      await loadDocs(token);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
@@ -69,7 +77,11 @@ export default function DocumentsPage() {
         </label>
       </div>
 
-      {error && <p style={{ color: "var(--error)", marginBottom: "1rem" }}>{error}</p>}
+      {error && (
+        <p style={{ color: "var(--error)", marginBottom: "1rem" }}>
+          {error} — <Link href="/login">Sign in as admin</Link>
+        </p>
+      )}
 
       <div style={{ display: "grid", gap: "1rem" }}>
         {docs.map((doc) => (

@@ -19,6 +19,8 @@ class ChatRequest(BaseModel):
     user_id: Optional[str] = None
     conversation_id: Optional[UUID] = None
     language: Optional[str] = None
+    university_slug: Optional[str] = None
+    plan: Optional[str] = None
 
 
 class Citation(BaseModel):
@@ -91,6 +93,7 @@ class TenantConfigResponse(BaseModel):
     name: str
     primary_color: str
     logo_url: Optional[str]
+    plan: str
     features: Dict[str, bool]
     theme_css_vars: Dict[str, str]
 

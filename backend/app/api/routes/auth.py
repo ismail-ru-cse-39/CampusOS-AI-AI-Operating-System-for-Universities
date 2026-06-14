@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import secrets
 from typing import Annotated, Optional
-from uuid import UUID, uuid4
+from urllib.parse import urlencode
+from uuid import uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, status
+import httpx
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, Field
 
 from app.core.config import settings
@@ -11,6 +15,9 @@ from app.core.deps import CurrentUser, get_current_user
 from app.core.security import create_access_token
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+# In-memory OIDC state store (use Redis in production)
+_oidc_states: dict[str, str] = {}
 
 
 class DevTokenRequest(BaseModel):
@@ -36,6 +43,13 @@ class MeResponse(BaseModel):
     role: str
 
 
+async def _fetch_oidc_config() -> dict:
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        response = await client.get(settings.oidc_discovery_url)
+        response.raise_for_status()
+        return response.json()
+
+
 @router.get("/status", response_model=AuthStatusResponse)
 async def auth_status() -> AuthStatusResponse:
     if settings.sso_configured:
@@ -56,18 +70,64 @@ async def sso_login_start():
             status_code=status.HTTP_501_NOT_IMPLEMENTED,
             detail="SSO is not configured. Set OIDC_CLIENT_ID and OIDC_DISCOVERY_URL.",
         )
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="OIDC authorization redirect is not wired yet (requires IdP credentials and callback handler).",
-    )
+
+    oidc = await _fetch_oidc_config()
+    state = secrets.token_urlsafe(32)
+    _oidc_states[state] = "pending"
+
+    params = {
+        "client_id": settings.oidc_client_id,
+        "response_type": "code",
+        "scope": "openid email profile",
+        "redirect_uri": settings.oidc_redirect_uri,
+        "state": state,
+    }
+    auth_url = f"{oidc['authorization_endpoint']}?{urlencode(params)}"
+    return RedirectResponse(auth_url)
 
 
 @router.get("/callback")
-async def sso_login_callback():
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="OIDC callback handler pending IdP configuration.",
-    )
+async def sso_login_callback(
+    code: Optional[str] = Query(default=None),
+    state: Optional[str] = Query(default=None),
+    error: Optional[str] = Query(default=None),
+):
+    if error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"SSO error: {error}")
+    if not code or not state or state not in _oidc_states:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid OIDC callback")
+    del _oidc_states[state]
+
+    oidc = await _fetch_oidc_config()
+    token_data = {
+        "grant_type": "authorization_code",
+        "code": code,
+        "redirect_uri": settings.oidc_redirect_uri,
+        "client_id": settings.oidc_client_id,
+        "client_secret": settings.oidc_client_secret,
+    }
+
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        token_resp = await client.post(oidc["token_endpoint"], data=token_data)
+        token_resp.raise_for_status()
+        tokens = token_resp.json()
+
+        userinfo = {}
+        if "access_token" in tokens:
+            ui_resp = await client.get(
+                oidc["userinfo_endpoint"],
+                headers={"Authorization": f"Bearer {tokens['access_token']}"},
+            )
+            if ui_resp.status_code == 200:
+                userinfo = ui_resp.json()
+
+    email = userinfo.get("email", "sso-user@campusos.edu")
+    role = userinfo.get("role", "student")
+    user_id = userinfo.get("sub", str(uuid4()))
+    token = create_access_token(user_id, extra={"role": role, "email": email})
+
+    frontend_url = settings.cors_origin_list[0] if settings.cors_origin_list else "http://localhost:3000"
+    return RedirectResponse(f"{frontend_url}/login?token={token}")
 
 
 @router.post("/dev-token", response_model=TokenResponse)

@@ -89,6 +89,13 @@ class WorkflowEngine:
             params=params,
         )
         self._workflows[workflow_id] = instance
+
+        from app.workers import enqueue_task
+
+        enqueue_task(
+            f"workflow_{workflow_type}",
+            {"workflow_id": str(workflow_id), "user_id": str(user_id), "params": params},
+        )
         await self._advance(instance)
         return self._to_response(instance)
 

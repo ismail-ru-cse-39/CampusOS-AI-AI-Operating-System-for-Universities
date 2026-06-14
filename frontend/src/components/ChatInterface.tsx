@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { sendChatMessage, type ChatResponse } from "@/lib/api";
+import { sendChatMessage, getDevToken, type ChatResponse } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 import { VoiceInputStub } from "./VoiceInputStub";
 
 interface Message {
@@ -20,11 +21,23 @@ const ROLES = [
 ];
 
 export default function ChatInterface() {
+  const { token, role, loginWithToken } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [role, setRole] = useState("student");
+  const [selectedRole, setSelectedRole] = useState(role);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  async function ensureToken(): Promise<string | undefined> {
+    if (token) return token;
+    try {
+      const newToken = await getDevToken("demo.student@campusos.edu", selectedRole);
+      await loginWithToken(newToken);
+      return newToken;
+    } catch {
+      return undefined;
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -37,7 +50,8 @@ export default function ChatInterface() {
     setLoading(true);
 
     try {
-      const response = await sendChatMessage(userMessage, role);
+      const authToken = token || (await ensureToken());
+      const response = await sendChatMessage(userMessage, selectedRole, authToken ?? undefined);
       setMessages((prev) => [
         ...prev,
         {
@@ -61,8 +75,8 @@ export default function ChatInterface() {
           Role:
         </label>
         <select
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
+          value={selectedRole}
+          onChange={(e) => setSelectedRole(e.target.value)}
           style={{
             background: "var(--surface)",
             border: "1px solid var(--border)",

@@ -18,6 +18,7 @@ async def get_tenant_config(slug: str):
         name=tenant.name,
         primary_color=tenant.primary_color,
         logo_url=tenant.logo_url,
+        plan=tenant.plan,
         features=tenant.features,
         theme_css_vars=tenant_service.get_theme_css_vars(slug),
     )

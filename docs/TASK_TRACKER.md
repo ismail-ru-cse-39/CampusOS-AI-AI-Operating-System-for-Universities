@@ -4,7 +4,7 @@ Track pending, in-progress, and completed work across all phases.
 
 **Related:** [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) | [ARCHITECTURE.md](ARCHITECTURE.md)
 
-**Statuses:** `Pending` | `In Progress` | `Done` | `Blocked`
+**Statuses:** `Pending` | `In Progress` | `Done` | `Blocked` | `Ready` (code complete — needs credentials/deploy)
 
 **Priorities:** P0 (critical) | P1 (high) | P2 (medium) | P3 (low)
 
@@ -14,10 +14,11 @@ Track pending, in-progress, and completed work across all phases.
 
 | Status | Count |
 |---|---|
-| Done | 48 |
+| Done | 43 |
+| Ready | 8 |
 | In Progress | 0 |
 | Pending | 0 |
-| Blocked | 11 |
+| Blocked | 0 |
 
 ---
 
@@ -42,12 +43,12 @@ Track pending, in-progress, and completed work across all phases.
 
 | ID | Task | Phase | Priority | Status | Owner | Notes |
 |---|---|---|---|---|---|---|
-| T-011 | Configure OIDC/SAML SSO provider | 1 | P0 | Blocked | — | Manual — do later; needs IdP client ID/secret/discovery URL |
-| T-012 | Auth routes and JWT middleware | 1 | P0 | Done | — | `/auth/dev-token`, `/auth/me`, SSO stubs return 501 |
+| T-011 | Configure OIDC/SAML SSO provider | 1 | P0 | Ready | — | OIDC login/callback wired; set OIDC_* env vars + IdP app registration |
+| T-012 | Auth routes and JWT middleware | 1 | P0 | Done | — | `/auth/dev-token`, `/auth/me`, SSO redirect when configured |
 | T-013 | RBAC enforcement on API routes and agents | 1 | P0 | Done | — | `AGENT_PERMISSIONS`, orchestrator filter, route guards |
 | T-014 | Audit logging service | 1 | P1 | Done | — | `services/audit.py` wired to chat (DB or log fallback) |
 | T-015 | Initialize Alembic migrations | 1 | P1 | Done | — | `20250612_0001`, `20250612_0002` |
-| T-016 | Frontend login flow and session management | 1 | P0 | Blocked | — | Manual — do later; depends on T-011 SSO |
+| T-016 | Frontend login flow and session management | 1 | P0 | Done | — | `/login`, AuthProvider, JWT in localStorage, SSO callback |
 
 ---
 
@@ -55,10 +56,10 @@ Track pending, in-progress, and completed work across all phases.
 
 | ID | Task | Phase | Priority | Status | Owner | Notes |
 |---|---|---|---|---|---|---|
-| T-017 | Wire LLM service (OpenAI embeddings + completions) | 2 | P0 | Blocked | — | Manual — do later; requires `OPENAI_API_KEY`; stub + graceful fallback in place |
-| T-018 | Document ingestion pipeline (chunk + embed) | 2 | P0 | Done | — | `services/ingestion.py` — chunking + mock embeddings; real embed blocked on T-017 |
+| T-017 | Wire LLM service (OpenAI embeddings + completions) | 2 | P0 | Ready | — | Auto-enables when `OPENAI_API_KEY` is set; plan-tier usage limits in `services/usage_limits.py` |
+| T-018 | Document ingestion pipeline (chunk + embed) | 2 | P0 | Done | — | `services/ingestion.py` — chunking + mock/real embeddings |
 | T-019 | pgvector semantic search in RAG service | 2 | P0 | Done | — | Hybrid search with hash-based mock embeddings |
-| T-020 | Knowledge Agent LLM answer synthesis | 2 | P0 | Blocked | — | Manual — do later; stub synthesis without API key |
+| T-020 | Knowledge Agent LLM answer synthesis | 2 | P0 | Ready | — | OpenAI synthesis wired; stub fallback without key |
 | T-021 | Document upload API endpoint | 2 | P1 | Done | — | `POST /api/v1/documents/upload` |
 | T-022 | Admin document management UI | 2 | P2 | Done | — | `frontend/src/app/documents/page.tsx` |
 
@@ -82,7 +83,7 @@ Track pending, in-progress, and completed work across all phases.
 | ID | Task | Phase | Priority | Status | Owner | Notes |
 |---|---|---|---|---|---|---|
 | T-029 | Workflow engine state machine | 4 | P0 | Done | — | `services/workflow_engine.py` — transcript, verification, booking |
-| T-030 | Redis background worker setup | 4 | P0 | Blocked | — | Manual — do later; `workers/stub.py` stub in place |
+| T-030 | Redis background worker setup | 4 | P0 | Ready | — | Celery + stub fallback; set `CELERY_ENABLED=true` + run worker |
 | T-031 | Admin Assistant Agent (workflow execution) | 4 | P0 | Done | — | Returns workflow ID + tracking URL |
 | T-032 | Timetable Agent (schedule optimizer) | 4 | P1 | Done | — | Constraint logic with demo schedules |
 | T-033 | Admissions Agent full implementation | 4 | P1 | Done | — | Demo program catalog |
@@ -107,10 +108,10 @@ Track pending, in-progress, and completed work across all phases.
 
 | ID | Task | Phase | Priority | Status | Owner | Notes |
 |---|---|---|---|---|---|---|
-| T-041 | Notification service with channel adapters | 6 | P0 | Done | — | `services/notifications.py` — in-app + stub adapters |
-| T-042 | Email integration (SMTP) | 6 | P1 | Blocked | — | Manual — do later; SMTP credentials |
-| T-043 | SMS integration (Twilio) | 6 | P2 | Blocked | — | Manual — do later; Twilio account |
-| T-044 | Teams/Slack webhook integrations | 6 | P2 | Blocked | — | Manual — do later; webhook URLs |
+| T-041 | Notification service with channel adapters | 6 | P0 | Done | — | In-app + SMTP/Twilio/webhook adapters |
+| T-042 | Email integration (SMTP) | 6 | P1 | Ready | — | Auto-enables when `SMTP_*` env vars set |
+| T-043 | SMS integration (Twilio) | 6 | P2 | Ready | — | Auto-enables when `TWILIO_*` env vars set |
+| T-044 | Teams/Slack webhook integrations | 6 | P2 | Ready | — | Auto-enables when webhook URLs set |
 
 ---
 
@@ -118,7 +119,7 @@ Track pending, in-progress, and completed work across all phases.
 
 | ID | Task | Phase | Priority | Status | Owner | Notes |
 |---|---|---|---|---|---|---|
-| T-045 | Graph database setup (Neo4j or PG graph) | 7 | P0 | Blocked | — | Manual — do later; Neo4j deployment |
+| T-045 | Graph database setup (Neo4j or PG graph) | 7 | P0 | Ready | — | Neo4j HTTP backend + PG adjacency fallback |
 | T-046 | Entity sync pipeline from Postgres | 7 | P1 | Done | — | `services/graph_sync.py` — Postgres adjacency stub |
 | T-047 | Graph-powered agent tools | 7 | P1 | Done | — | `services/knowledge_graph.py` + `/graph/query` |
 
@@ -131,7 +132,7 @@ Track pending, in-progress, and completed work across all phases.
 | T-048 | Multilingual support (7+ languages) | 8 | P1 | Done | — | `services/i18n.py` + EN/AR/ZH/ES/FR/HI/BN JSON |
 | T-049 | Voice input/output interface | 8 | P2 | Done | — | `VoiceInputStub.tsx` in chat UI |
 | T-050 | Multi-campus white-label deployment | 8 | P2 | Done | — | `services/tenant.py` + `/tenants/{slug}` |
-| T-051 | Production CI/CD pipeline | 8 | P1 | Blocked | — | Manual — do later; GitHub Actions secrets |
+| T-051 | Production CI/CD pipeline | 8 | P1 | Done | — | `.github/workflows/ci.yml` — pytest + frontend build |
 
 ---
 
@@ -152,3 +153,8 @@ When blocked:
 
 1. Change Status to `Blocked`
 2. Add reason in Notes
+
+When code-complete but waiting on credentials/deploy:
+
+1. Change Status to `Ready`
+2. Document required env vars in Notes

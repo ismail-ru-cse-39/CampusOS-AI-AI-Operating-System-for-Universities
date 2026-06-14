@@ -1,28 +1,36 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ExecutiveMetrics, getDevToken, getExecutiveMetrics } from "@/lib/api";
+import Link from "next/link";
+import { ExecutiveMetrics, getExecutiveMetrics } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 
 export default function DashboardPage() {
+  const { token, loading: authLoading, loginDev } = useAuth();
   const [data, setData] = useState<ExecutiveMetrics | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (authLoading) return;
     (async () => {
       try {
-        const token = await getDevToken("exec@campusos.edu", "executive");
-        const metrics = await getExecutiveMetrics(token);
+        let authToken = token;
+        if (!authToken) {
+          await loginDev("exec@campusos.edu", "executive");
+          return;
+        }
+        const metrics = await getExecutiveMetrics(authToken);
         setData(metrics);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load dashboard");
       }
     })();
-  }, []);
+  }, [token, authLoading, loginDev]);
 
   if (error) {
     return (
       <div style={{ maxWidth: 1100, margin: "2rem auto", padding: "0 2rem" }}>
-        <p style={{ color: "var(--muted)" }}>{error} — showing fallback metrics.</p>
+        <p style={{ color: "var(--muted)" }}>{error} — <Link href="/login">Sign in as executive</Link></p>
       </div>
     );
   }

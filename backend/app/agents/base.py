@@ -12,6 +12,8 @@ class AgentContext:
     message: str
     user_role: str
     user_id: str | None = None
+    university_id: str = "demo-university"
+    plan: str = "starter"
     memory: dict[str, Any] = field(default_factory=dict)
 
 

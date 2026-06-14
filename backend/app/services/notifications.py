@@ -1,12 +1,19 @@
 from __future__ import annotations
 
+import asyncio
 import logging
+import smtplib
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from email.message import EmailMessage
 from enum import Enum
 from typing import Any
 from uuid import UUID, uuid4
+
+import httpx
+
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +62,7 @@ class InAppAdapter(ChannelAdapter):
 
 
 class StubChannelAdapter(ChannelAdapter):
-    """Logs outbound messages — real SMTP/Twilio/webhooks require credentials."""
+    """Logs outbound messages when channel credentials are not configured."""
 
     def __init__(self, channel: NotificationChannel) -> None:
         self.channel = channel
@@ -71,14 +78,106 @@ class StubChannelAdapter(ChannelAdapter):
         return True
 
 
+class EmailAdapter(ChannelAdapter):
+    channel = NotificationChannel.EMAIL
+
+    async def send(self, message: NotificationMessage) -> bool:
+        if not settings.smtp_configured:
+            return await StubChannelAdapter(NotificationChannel.EMAIL).send(message)
+
+        def _send_sync() -> None:
+            email = EmailMessage()
+            email["Subject"] = message.subject
+            email["From"] = settings.smtp_from
+            email["To"] = message.metadata.get("email", message.user_id)
+            email.set_content(message.body)
+            with smtplib.SMTP(settings.smtp_host, settings.smtp_port) as server:
+                if settings.smtp_user and settings.smtp_password:
+                    server.starttls()
+                    server.login(settings.smtp_user, settings.smtp_password)
+                server.send_message(email)
+
+        try:
+            await asyncio.to_thread(_send_sync)
+            message.status = "delivered"
+            return True
+        except Exception as exc:
+            logger.error("email_send_failed user=%s error=%s", message.user_id, exc)
+            message.status = "failed"
+            return False
+
+
+class SMSAdapter(ChannelAdapter):
+    channel = NotificationChannel.SMS
+
+    async def send(self, message: NotificationMessage) -> bool:
+        if not settings.twilio_configured:
+            return await StubChannelAdapter(NotificationChannel.SMS).send(message)
+
+        phone = message.metadata.get("phone", message.user_id)
+        url = (
+            f"https://api.twilio.com/2010-04-01/Accounts/"
+            f"{settings.twilio_account_sid}/Messages.json"
+        )
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(
+                    url,
+                    auth=(settings.twilio_account_sid, settings.twilio_auth_token),
+                    data={
+                        "From": settings.twilio_from_number,
+                        "To": phone,
+                        "Body": f"{message.subject}: {message.body}",
+                    },
+                )
+                response.raise_for_status()
+            message.status = "delivered"
+            return True
+        except Exception as exc:
+            logger.error("sms_send_failed user=%s error=%s", message.user_id, exc)
+            message.status = "failed"
+            return False
+
+
+class WebhookAdapter(ChannelAdapter):
+    def __init__(self, channel: NotificationChannel, webhook_url: str) -> None:
+        self.channel = channel
+        self.webhook_url = webhook_url
+
+    async def send(self, message: NotificationMessage) -> bool:
+        if not self.webhook_url:
+            return await StubChannelAdapter(self.channel).send(message)
+
+        payload = {
+            "text": f"*{message.subject}*\n{message.body}",
+            "subject": message.subject,
+            "body": message.body,
+            "user_id": message.user_id,
+        }
+        try:
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                response = await client.post(self.webhook_url, json=payload)
+                response.raise_for_status()
+            message.status = "delivered"
+            return True
+        except Exception as exc:
+            logger.error("webhook_send_failed channel=%s error=%s", self.channel.value, exc)
+            message.status = "failed"
+            return False
+
+
 class NotificationService:
     def __init__(self) -> None:
         self._adapters: dict[NotificationChannel, ChannelAdapter] = {
             NotificationChannel.IN_APP: InAppAdapter(),
-            NotificationChannel.EMAIL: StubChannelAdapter(NotificationChannel.EMAIL),
-            NotificationChannel.SMS: StubChannelAdapter(NotificationChannel.SMS),
-            NotificationChannel.TEAMS: StubChannelAdapter(NotificationChannel.TEAMS),
-            NotificationChannel.SLACK: StubChannelAdapter(NotificationChannel.SLACK),
+            NotificationChannel.EMAIL: EmailAdapter(),
+            NotificationChannel.SMS: SMSAdapter(),
+            NotificationChannel.TEAMS: WebhookAdapter(
+                NotificationChannel.TEAMS, settings.teams_webhook_url
+            ),
+            NotificationChannel.SLACK: WebhookAdapter(
+                NotificationChannel.SLACK, settings.slack_webhook_url
+            ),
         }
 
     async def notify(

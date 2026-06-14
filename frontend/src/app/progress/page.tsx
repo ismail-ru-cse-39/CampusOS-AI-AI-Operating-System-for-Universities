@@ -1,28 +1,37 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getDevToken, getStudentProgress, StudentProgress } from "@/lib/api";
+import Link from "next/link";
+import { getStudentProgress, StudentProgress } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 
 export default function ProgressPage() {
+  const { token, loading: authLoading, loginDev } = useAuth();
   const [data, setData] = useState<StudentProgress | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (authLoading) return;
     (async () => {
       try {
-        const token = await getDevToken();
-        const progress = await getStudentProgress(token);
+        let authToken = token;
+        if (!authToken) {
+          await loginDev("demo.student@campusos.edu", "student");
+          return;
+        }
+        const progress = await getStudentProgress(authToken);
         setData(progress);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load progress");
       }
     })();
-  }, []);
+  }, [token, authLoading, loginDev]);
 
   if (error) {
     return (
       <div style={{ maxWidth: 800, margin: "2rem auto", padding: "0 2rem" }}>
         <p style={{ color: "var(--error)" }}>{error}</p>
+        <Link href="/login">Sign in</Link>
       </div>
     );
   }

@@ -7,9 +7,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents.base import Agent, AgentContext, AgentResult
 from app.agents.registry import agent_registry
+from app.core.config import settings
 from app.core.rbac import can_access_agent, parse_role
 from app.services.i18n import i18n_service
 from app.services.memory import load_student_memory
+from app.services.usage_limits import usage_limit_service
 
 
 class Orchestrator:
@@ -22,6 +24,8 @@ class Orchestrator:
         user_id: str | None = None,
         db: Optional[AsyncSession] = None,
         language: str | None = None,
+        university_id: str | None = None,
+        plan: str | None = None,
     ) -> AgentResult:
         role = parse_role(user_role)
         uid: UUID | None = None
@@ -34,10 +38,15 @@ class Orchestrator:
         memory = await load_student_memory(db, uid)
         lang = language or i18n_service.detect_language(message)
 
+        uni_id = university_id or settings.default_university_slug
+        resolved_plan = usage_limit_service.resolve_plan(plan=plan, university_slug=uni_id)
+
         context = AgentContext(
             message=message,
             user_role=user_role,
             user_id=user_id,
+            university_id=uni_id,
+            plan=resolved_plan,
             memory=memory,
         )
 

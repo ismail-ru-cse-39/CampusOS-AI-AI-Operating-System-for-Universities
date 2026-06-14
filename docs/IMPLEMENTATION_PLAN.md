@@ -51,7 +51,7 @@ None.
 
 ## Phase 1: Auth, RBAC, and Audit Logging
 
-**Status:** Mostly complete — RBAC on agents/routes (T-013), auth/audit/Alembic done; SSO (T-011) and frontend session (T-016) blocked on IdP
+**Status:** Mostly complete — OIDC flow wired (T-011 Ready); dev login + session done (T-016)
 
 ### Objectives
 
@@ -88,7 +88,7 @@ None.
 
 ### Acceptance Criteria
 
-- [ ] Users authenticate via SSO and receive role-scoped JWT (blocked — use `/auth/dev-token` for dev)
+- [x] Users authenticate via dev token or SSO when OIDC env vars are set
 - [x] RBAC enforced on agents and protected routes
 - [x] Students cannot access retention/executive agents
 - [x] Audit log entries on chat and profile views
@@ -101,7 +101,7 @@ Phase 0.
 
 ## Phase 2: Knowledge Agent (Full RAG)
 
-**Status:** Mostly complete — ingestion, upload API, hybrid search done; real OpenAI wiring (T-017/T-020) blocked on API key
+**Status:** Mostly complete — ingestion, upload API, hybrid search, OpenAI wiring (T-017/T-020 Ready when key set)
 
 ### Objectives
 
@@ -189,7 +189,7 @@ Phase 1, Phase 2 (for policy cross-references).
 
 ## Phase 4: Workflow Engine and Service Agents
 
-**Status:** Mostly complete — workflow engine and service agents done; Redis worker (T-030) stub only
+**Status:** Mostly complete — workflow engine and Celery stub (T-030 Ready when Redis enabled)
 
 ### Objectives
 
@@ -274,7 +274,7 @@ Phase 3, Phase 4.
 
 ## Phase 6: Communication Hub
 
-**Status:** Partial — notification service with stub adapters (T-041); channel integrations blocked
+**Status:** Partial — notification adapters wired (T-042–T-044 Ready when credentials set)
 
 ### Objectives
 
@@ -309,7 +309,7 @@ Phase 5.
 
 ## Phase 7: University Knowledge Graph
 
-**Status:** Partial — Postgres adjacency graph + query API (T-046/T-047); Neo4j deployment blocked
+**Status:** Partial — Neo4j optional backend (T-045 Ready); PG adjacency fallback active
 
 ### Objectives
 
@@ -341,7 +341,7 @@ Phase 3, Phase 4.
 
 ## Phase 8: Voice, Multilingual, and Enterprise Deployment
 
-**Status:** Mostly complete — i18n, voice stub, multi-tenant branding done; CI/CD (T-051) blocked
+**Status:** Complete — i18n, voice stub, multi-tenant branding, GitHub Actions CI (T-051)
 
 ### Objectives
 

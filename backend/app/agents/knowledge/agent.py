@@ -1,6 +1,7 @@
 from app.agents.base import Agent, AgentContext, AgentResult
 from app.services.llm import llm_service
 from app.services.rag import rag_service
+from app.services.usage_limits import LLMUsageContext, usage_limit_service
 
 
 class KnowledgeAgent(Agent):
@@ -36,10 +37,33 @@ class KnowledgeAgent(Agent):
             }
             for r in results
         ]
-        answer = await llm_service.synthesize_answer(context.message, chunks)
+
+        limits = usage_limit_service.get_effective_limits(context.plan, context.user_role)
+        usage = LLMUsageContext(
+            university_id=context.university_id,
+            user_id=context.user_id,
+            user_role=context.user_role,
+            plan=context.plan,
+        )
+
+        if limits.llm_synthesis_enabled:
+            answer = await llm_service.synthesize_answer(context.message, chunks, usage=usage)
+            search_mode = "hybrid+synthesis"
+        else:
+            top = chunks[0]
+            answer = (
+                f"Based on official university documents:\n\n{top.get('excerpt', '')}\n\n"
+                f"Source: {top.get('document_title', 'Unknown')}"
+            )
+            search_mode = "hybrid+excerpt"
+
         return AgentResult(
             agent=self.name,
             message=answer,
             citations=citations,
-            metadata={"documents_matched": len(results), "search_mode": "hybrid"},
+            metadata={
+                "documents_matched": len(results),
+                "search_mode": search_mode,
+                "plan": context.plan,
+            },
         )
